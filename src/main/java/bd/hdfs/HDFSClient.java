@@ -90,9 +90,9 @@ public class HDFSClient {
 
     public static void main(String[] args) {
 
-        String hdfsFilePath = "hdfs://ns/hdfs_client/from_local_2_hdfs.txt";
+        String hdfsFilePath = "hdfs://ns/input/wc/wc-test1.txt";
         HDFSClient hdfsClient = new HDFSClient();
-        String localFilePath = "D:/user/hdfstest.txt";
+        String localFilePath = "D:/user/wc-test1.txt";
         hdfsClient.writeHDFSFile(localFilePath,hdfsFilePath);//写入文件
         hdfsClient.readHDFSFile(hdfsFilePath);//读取文件
 

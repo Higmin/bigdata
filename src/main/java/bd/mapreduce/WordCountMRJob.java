@@ -41,6 +41,7 @@ public class WordCountMRJob {
             for (String word : words){
                 //word 1
                 context.write(new Text(word),new IntWritable(1));
+                System.out.println("map key-->"+key+" map conut-->"+1);
             }
 
         }
@@ -66,7 +67,7 @@ public class WordCountMRJob {
                 sum += value.get();
             }
             context.write(key,new IntWritable(sum));
-
+            System.out.println("reduce key-->"+key+" reduce conut-->"+sum);
         }
     }
 
