@@ -1,4 +1,4 @@
-package bd.mapreduce;
+package bd.mapreduce.log_analysis;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -6,6 +6,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -22,7 +23,7 @@ import java.io.IOException;
  * @Date : 2019/5/16 08:05
  * @Description : mapreduce  使用工具类  统计单词 数量
  */
-public class WordCountMRJobNew extends Configured implements Tool {
+public class SelectWhereMRJob extends Configured implements Tool {
     @Override
     public int run(String[] args) throws Exception {
         //1.配置job
@@ -31,7 +32,7 @@ public class WordCountMRJobNew extends Configured implements Tool {
 
         //2.创建job
         job = Job.getInstance(conf);
-        job.setJarByClass(WordCountMRJobNew.class);//设置通过主类来获取job
+        job.setJarByClass(SelectWhereMRJob.class);//设置通过主类来获取job
 
         //3.给job设置执行流程
         //3.1 HDFS中需要处理的文件路径
@@ -40,14 +41,12 @@ public class WordCountMRJobNew extends Configured implements Tool {
         FileInputFormat.addInputPath(job, path);
 
         //3.2设置map执行流程
-        job.setMapperClass(WordCountMapper.class);
+        job.setMapperClass(SelectWhereMapper.class);
         job.setMapOutputKeyClass(Text.class);//设置map输出key的类型
-        job.setMapOutputValueClass(IntWritable.class);//设置map输出value的类型
+        job.setMapOutputValueClass(NullWritable.class);//设置map输出value的类型
+        job.setNumReduceTasks(0);//MR默认是1 Reduce task
+        //3.3设置reduce执行流程
 
-        //3.2设置reduce执行流程
-        job.setReducerClass(WordCountReducer.class);
-        job.setOutputKeyClass(Text.class);//设置reduce输出key的类型
-        job.setMapOutputValueClass(IntWritable.class);//设置reduce输出value的类型
 
         //3.4设置计算结果输出路径
         Path output = new Path(args[1]);
@@ -69,18 +68,17 @@ public class WordCountMRJobNew extends Configured implements Tool {
      * Text：输出数据key的类型
      * IntWritable：输出数据value类型
      */
-    public static class WordCountMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
+    public static class SelectWhereMapper extends Mapper<LongWritable, Text, Text, NullWritable> {
 
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String line = value.toString();
-            String[] words = line.split("\t");
-            for (String word : words) {
-                //word 1
-                context.write(new Text(word), new IntWritable(1));
-                System.out.println("map key-->" + key + " map conut-->" + 1);
+            String[] fields = line.split("\t");
+            if (fields != null && fields.length == 9){
+                if (fields[1].equals("apple")){
+                    context.write(new Text(line),NullWritable.get());
+                }
             }
-
         }
     }
 
@@ -95,7 +93,7 @@ public class WordCountMRJobNew extends Configured implements Tool {
      * Text:
      * ntWritable:
      */
-    public static class WordCountReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
+    public static class SelectWhereReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
         @Override
         protected void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
             //word {1,1,1.........}
@@ -113,8 +111,8 @@ public class WordCountMRJobNew extends Configured implements Tool {
         //用于本地测试
         if (args.length == 0){
             args = new String[]{
-                "hdfs://ns/input/wc",
-                "hdfs://ns/output/wc"
+                    "hdfs://ns/mr_project/ad_log/ad_20190107.txt",
+                    "hdfs://ns/mr_project/log_analysis/output1"
             };
         }
         Configuration conf = new Configuration();
@@ -129,7 +127,7 @@ public class WordCountMRJobNew extends Configured implements Tool {
             e.printStackTrace();
         }
         try {
-            int status = ToolRunner.run(conf, new WordCountMRJobNew(), args);
+            int status = ToolRunner.run(conf, new SelectWhereMRJob(), args);
             System.exit(status);
         } catch (Exception e) {
             e.printStackTrace();
