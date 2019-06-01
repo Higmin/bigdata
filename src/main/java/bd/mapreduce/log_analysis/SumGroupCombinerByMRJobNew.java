@@ -21,6 +21,10 @@ import java.io.IOException;
  * @Auther : guojianmin
  * @Date : 2019/5/16 08:05
  * @Description : 需求2 Combiner 预聚合，减少网络传输数据量
+ *
+ * 实现思路：Combiner 实现一般很简单，和reduce一样
+ * 注意：1.需要看Combiner的输入类型（map阶段的输出类型）输出类型（reduce阶段的输入类型）相对应。
+ *      2.注意一些不准确的的统计值。例如本案例中，点击率在预聚合阶段的统计是不准确的，所以在Combiner阶段不做点击率的处理。
  */
 public class SumGroupCombinerByMRJobNew extends Configured implements Tool {
     @Override

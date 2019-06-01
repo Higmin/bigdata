@@ -21,7 +21,14 @@ import java.io.IOException;
 /**
  * @Auther : guojianmin
  * @Date : 2019/5/16 08:05
- * @Description : 需求1 获取指定广告主的明细数据
+ * @Description : 需求1 获取某一天指定广告主（apple）的明细数据
+ *
+ * 日志文件名 ：date(例如：20190107)
+ * 等价table 字段： id , advertiser_id , duration , position , area_id , terminal_id , view_type , device_id , date
+ * 等价sql : select * from log_table where advertiser_id = ‘apple’ and date ='20190107'
+ *
+ * 实现思路：没有统计需求，只需要map阶段就可以实现。
+ *          在map阶段，在读取到的每一行值中，过滤出来需要的数据(advertiser_id = ‘apple’)，然后直接输出 key 就可以
  */
 public class SelectWhereMRJob extends Configured implements Tool {
     @Override
@@ -96,13 +103,6 @@ public class SelectWhereMRJob extends Configured implements Tool {
     public static class SelectWhereReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
         @Override
         protected void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
-            //word {1,1,1.........}
-            int sum = 0;
-            for (IntWritable value : values) {
-                sum += value.get();
-            }
-            context.write(key, new IntWritable(sum));
-            System.out.println("reduce key-->" + key + " reduce conut-->" + sum);
         }
     }
 

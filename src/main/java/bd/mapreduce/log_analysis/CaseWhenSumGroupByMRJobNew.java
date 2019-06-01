@@ -25,6 +25,17 @@ import java.util.HashMap;
  * @Auther : guojianmin
  * @Date : 2019/5/16 08:05
  * @Description : 需求4 自定义partitioner
+ *
+ * 统计2019年 1月7日，各终端类型的曝光量，点击量，一个结果文件存储一种终端类型文件
+ *
+ * 实现思路：根据 终端ID 发送到不同的Reduce Task ,自定义partitioner
+ * map阶段：拆分每条日志数据，将需要的terminal_id，和view_type 找出来放在Entity中 ，然后以<terminal_id,Entity>发送给reduce
+ * 自定义partitioner：1.重写getPartition 方法
+ *                   2.然后根据 map 输出key 的类型 来获取到 终端id，
+ *                   2.然后根据终端id 获取到要发送的 Reduce Task 编号，并发送到对应的Reduce Task上（即返回值为对应的编号）
+ * reduce阶段：1.setup reduce开始的时候调用一次(这里用于初始化终端ID和终端类型的对应关系)
+ *            2.reduce 通过终端id 获取到终端类型，然后将终端类型，和曝光量，点击量的统计放在Entity中。
+ *            3.cleanup 在reduce 结束的时候调用一次 ，通常用于释放连接等，这里用于输出统计结果
  */
 public class CaseWhenSumGroupByMRJobNew extends Configured implements Tool {
     @Override
@@ -86,7 +97,7 @@ public class CaseWhenSumGroupByMRJobNew extends Configured implements Tool {
             String line = value.toString();
             String[] fields = line.split("\t");
 
-            String terminal_id = fields[6];//终端id
+            String terminal_id = fields[5];//终端id
             String viewType = fields[6];
             if (viewType != null && !viewType.equals("")){
                 AdMetricWritable adMetric = new AdMetricWritable();

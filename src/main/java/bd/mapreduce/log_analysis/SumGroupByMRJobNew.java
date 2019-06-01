@@ -22,6 +22,16 @@ import java.io.IOException;
  * @Auther : guojianmin
  * @Date : 2019/5/16 08:05
  * @Description : 需求2 自定义value
+ *
+ * 统计2019年1月 1号到7号 每天的曝光量，点击量和点击率
+ *
+ * 日志文件名 ：date(例如：20190107)
+ * 等价table 字段： id , advertiser_id , duration , position , area_id , terminal_id , view_type , device_id , date
+ * 等价sql : select date,sum(view_type=1) pv , sum(view_type=2)click, click/pv as clickRate
+ *          from log_table where date >= ‘20190101’ and date <='20190107'
+ *
+ * 实现思路：map 阶段： 拆分每条日志数据，将需要的date，和view_type 找出来放在Entity中 ，然后以<date,Entity>发送给reduce
+ *          reduce 阶段：同一个reduce的shuffle阶段按照日期排序，并且按照日期分组，每一组值调用一次reduce进行统计，然后输出统计结果<date,Entity>
  */
 public class SumGroupByMRJobNew extends Configured implements Tool {
     @Override

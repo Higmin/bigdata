@@ -10,7 +10,8 @@ import java.util.HashMap;
  * 自定义Partitioner 用于根据 终端ID 发送到不同的Reduce Task
  * 自定义Partitioner 会在map 输出之后 调用 自定义Partitioner ，
  * 然后根据 map 输出key 的类型 来获取到 终端id
- * 然后根据终端id 获取到 Reduce Task （这里省略了一步 ：根据终端id获取到终端类型，然后根据终端类型获取到对应的Reduce Task）
+ * （重写getPartition 方法）然后根据终端id 获取到要发送的 Reduce Task 编号，并发送到对应的Reduce Task上（即返回值为对应的编号）
+ * （这里省略了一步 ：根据终端id获取到终端类型，然后根据终端类型获取到对应的Reduce Task）
  * 发送到不同的Reduce Task 进行处理
  *
  */
@@ -46,6 +47,13 @@ public class TerminalTypePartitioner extends Partitioner<Text,AdMetricWritable> 
         terminalTaskMap.put("6.1",2);
     }
 
+    /**
+     * 根据 map 输出key 的类型 来获取到 终端id
+     * @param key map 输出key
+     * @param value map 输出value
+     * @param numReduceTasks Reduce Task 编号
+     * @return
+     */
     @Override
     public int getPartition(Text key, AdMetricWritable value, int numReduceTasks) {
         String terminalId = key.toString();

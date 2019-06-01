@@ -22,6 +22,16 @@ import java.io.IOException;
  * @Auther : guojianmin
  * @Date : 2019/5/16 08:05
  * @Description : 需求3 自定义键，实现对需求2 结果进行 逆序 排列
+ *
+ *  日志文件名 ：date(例如：20190107)
+ *  等价table 字段： id , advertiser_id , duration , position , area_id , terminal_id , view_type , device_id , date
+ *  等价sql : select date,sum(view_type=1) pv , sum(view_type=2)click, click/pv as clickRate
+ *           from log_table where date >= ‘20190101’ and date <='20190107'
+ *           order by pv desc
+ *
+ *  实现思路：map 阶段：获取到需求2的数据，然后发送到reduce
+ *          reduce 阶段：shuffle阶段 排序 默认是key的升序。可以通过自定义key（重写compareTo方法） 输出
+ *
  */
 public class OrderByDescMRJobNew extends Configured implements Tool {
     @Override
