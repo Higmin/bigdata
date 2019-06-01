@@ -1,9 +1,7 @@
 package bd.mapreduce.log_analysis;
 
-import bd.io.AdMetricWritable;
+
 import bd.io.ReduceSideJoinWritable;
-import bd.io.TerminalTypeReportWritable;
-import bd.lib.TerminalTypePartitioner;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
@@ -55,7 +53,7 @@ public class ReduceSideJoinMRJobNew extends Configured implements Tool {
         //3.给job设置执行流程
         //3.1 HDFS中需要处理的文件路径(多文件路径)
         Path[] inputPath = new Path[args.length-1];
-        for (int i = 0; i < inputPath.length-1; i++){
+        for (int i = 0; i < inputPath.length; i++){
             inputPath[i] = new Path(args[i]);
         }
         FileInputFormat.setInputPaths(job,inputPath);
