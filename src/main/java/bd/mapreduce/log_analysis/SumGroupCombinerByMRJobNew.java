@@ -20,7 +20,7 @@ import java.io.IOException;
 /**
  * @Auther : guojianmin
  * @Date : 2019/5/16 08:05
- * @Description : mapreduce  使用工具类  统计单词 数量
+ * @Description : 需求2 Combiner 预聚合，减少网络传输数据量
  */
 public class SumGroupCombinerByMRJobNew extends Configured implements Tool {
     @Override
