@@ -1,11 +1,11 @@
 package bd.mapreduce.log_analysis;
 
 import bd.io.AdMetricWritable;
+import bd.io.PVKeyWritable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -23,7 +23,7 @@ import java.io.IOException;
  * @Date : 2019/5/16 08:05
  * @Description : mapreduce  使用工具类  统计单词 数量
  */
-public class SumGroupByMRJobNew extends Configured implements Tool {
+public class OrderByDescMRJobNew extends Configured implements Tool {
     @Override
     public int run(String[] args) throws Exception {
         //1.配置job
@@ -32,7 +32,7 @@ public class SumGroupByMRJobNew extends Configured implements Tool {
 
         //2.创建job
         job = Job.getInstance(conf);
-        job.setJarByClass(SumGroupByMRJobNew.class);//设置通过主类来获取job
+        job.setJarByClass(OrderByDescMRJobNew.class);//设置通过主类来获取job
 
         //3.给job设置执行流程
         //3.1 HDFS中需要处理的文件路径
@@ -41,12 +41,12 @@ public class SumGroupByMRJobNew extends Configured implements Tool {
         FileInputFormat.addInputPath(job, path);
 
         //3.2设置map执行流程
-        job.setMapperClass(SumGroupByMapper.class);
-        job.setMapOutputKeyClass(Text.class);//设置map输出key的类型
-        job.setMapOutputValueClass(AdMetricWritable.class);//设置map输出value的类型
+        job.setMapperClass(OrderByDescMapper.class);
+        job.setMapOutputKeyClass(PVKeyWritable.class);//设置map输出key的类型
+        job.setMapOutputValueClass(Text.class);//设置map输出value的类型
 
         //3.2设置reduce执行流程
-        job.setReducerClass(SumGroupByReducer.class);
+        job.setReducerClass(OrderByDescReducer.class);
         job.setOutputKeyClass(Text.class);//设置reduce输出key的类型
         job.setOutputValueClass(AdMetricWritable.class);//设置reduce输出value的类型
 
@@ -72,26 +72,22 @@ public class SumGroupByMRJobNew extends Configured implements Tool {
      * Text：输出数据key的类型
      * AdMetricWritable：输出数据value类型
      */
-    public static class SumGroupByMapper extends Mapper<LongWritable, Text, Text, AdMetricWritable> {
+    public static class OrderByDescMapper extends Mapper<LongWritable, Text, PVKeyWritable, Text> {
 
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-            //id , advertiser_id , duration , position , area_id , terminal_id , view_type , device_id , date
+            //20190101	1025	475	0.46341464
             String line = value.toString();
             String[] fields = line.split("\t");
+            String date = fields[0];
+            Long pv = Long.valueOf(fields[1]);
+            Long click = Long.valueOf(fields[2]);
+            float clickRate = Float.valueOf(fields[3]);
+            PVKeyWritable pvKey = new PVKeyWritable();//自定义的key类型，可以按照pv降序排列
+            pvKey.setPv(pv);
 
-            String date = fields[8];
-            String viewType = fields[6];
-            if (viewType != null && !viewType.equals("")){
-                AdMetricWritable adMetric = new AdMetricWritable();
-                int viewTypeInt = Integer.parseInt(viewType);
-                if (viewTypeInt == 1){//曝光
-                    adMetric.setPv(1);
-                }else if (viewTypeInt == 2){
-                    adMetric.setClick(1);
-                }
-                context.write(new Text(date),adMetric);
-            }
+            String val = date + "\t" + click + "\t" + clickRate;//自定义输出格式，中间用换行符 \t 分割
+            context.write(pvKey,new Text(val));
 
         }
     }
@@ -107,22 +103,18 @@ public class SumGroupByMRJobNew extends Configured implements Tool {
      * Text:
      * ntWritable:
      */
-    public static class SumGroupByReducer extends Reducer<Text, AdMetricWritable, Text, AdMetricWritable> {
+    public static class OrderByDescReducer extends Reducer<PVKeyWritable, Text, Text, AdMetricWritable> {
         @Override
-        protected void reduce(Text key, Iterable<AdMetricWritable> values, Context context) throws IOException, InterruptedException {
-            long pv = 0;
-            long click = 0;
-            float clickRate = 0;
-            for (AdMetricWritable adMetric : values){
-                pv += adMetric.getPv();
-                click += adMetric.getClick();
+        protected void reduce(PVKeyWritable key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+
+            for (Text value:values) {
+                String[] valStrs = value.toString().split("\t");
+                AdMetricWritable ad = new AdMetricWritable();
+                ad.setPv(key.getPv());
+                ad.setClick(Long.valueOf(valStrs[1]));
+                ad.setClickRate(Float.valueOf(valStrs[2]));
+                context.write(new Text(valStrs[0]),ad);//输出的时候  会调用AdMetricWritable的tostring 方法
             }
-            //clickRate = clisk / pv
-            if (pv != 0 && click != 0){
-                clickRate = (float) click / (float) pv;
-            }
-            AdMetricWritable ad = new AdMetricWritable(pv,click,clickRate);
-            context.write(key,ad);
         }
     }
 
@@ -147,7 +139,7 @@ public class SumGroupByMRJobNew extends Configured implements Tool {
             e.printStackTrace();
         }
         try {
-            int status = ToolRunner.run(conf, new SumGroupByMRJobNew(), args);
+            int status = ToolRunner.run(conf, new OrderByDescMRJobNew(), args);
             System.exit(status);
         } catch (Exception e) {
             e.printStackTrace();

@@ -5,7 +5,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -23,7 +22,7 @@ import java.io.IOException;
  * @Date : 2019/5/16 08:05
  * @Description : mapreduce  使用工具类  统计单词 数量
  */
-public class SumGroupByMRJobNew extends Configured implements Tool {
+public class SumGroupCombinerByMRJobNew extends Configured implements Tool {
     @Override
     public int run(String[] args) throws Exception {
         //1.配置job
@@ -32,7 +31,7 @@ public class SumGroupByMRJobNew extends Configured implements Tool {
 
         //2.创建job
         job = Job.getInstance(conf);
-        job.setJarByClass(SumGroupByMRJobNew.class);//设置通过主类来获取job
+        job.setJarByClass(SumGroupCombinerByMRJobNew.class);//设置通过主类来获取job
 
         //3.给job设置执行流程
         //3.1 HDFS中需要处理的文件路径
@@ -44,6 +43,9 @@ public class SumGroupByMRJobNew extends Configured implements Tool {
         job.setMapperClass(SumGroupByMapper.class);
         job.setMapOutputKeyClass(Text.class);//设置map输出key的类型
         job.setMapOutputValueClass(AdMetricWritable.class);//设置map输出value的类型
+
+        //设置Combiner
+        job.setCombinerClass(SumGroupByCombiner.class);
 
         //3.2设置reduce执行流程
         job.setReducerClass(SumGroupByReducer.class);
@@ -96,6 +98,30 @@ public class SumGroupByMRJobNew extends Configured implements Tool {
         }
     }
 
+    /**
+     * Combiner 阶段
+     * 适用于局部预聚合，以减少传输数据量，
+     */
+    public static class SumGroupByCombiner extends Reducer<Text, AdMetricWritable, Text, AdMetricWritable> {
+        @Override
+        protected void reduce(Text key, Iterable<AdMetricWritable> values, Context context) throws IOException, InterruptedException {
+            long pv = 0;
+            long click = 0;
+            float clickRate = 0;
+            for (AdMetricWritable adMetric : values){
+                pv += adMetric.getPv();
+                click += adMetric.getClick();
+            }
+            //Combiner阶段不需要计算点击率，适用于局部预聚合，以减少传输数据量，所以输出类型和map阶段的输出类型一致
+//            //clickRate = clisk / pv
+//            if (pv != 0 && click != 0){
+//                clickRate = (float) click / (float) pv;
+//            }
+            AdMetricWritable ad = new AdMetricWritable(pv,click,clickRate);
+            context.write(key,ad);
+        }
+    }
+
     //Reduce阶段
 
     /**
@@ -132,7 +158,7 @@ public class SumGroupByMRJobNew extends Configured implements Tool {
         if (args.length == 0){
             args = new String[]{
                 "hdfs://ns/mr_project/ad_log/",
-                "hdfs://ns/mr_project/log_analysis/output2"
+                "hdfs://ns/mr_project/log_analysis/Combiner_output2"
             };
         }
         Configuration conf = new Configuration();
@@ -147,7 +173,7 @@ public class SumGroupByMRJobNew extends Configured implements Tool {
             e.printStackTrace();
         }
         try {
-            int status = ToolRunner.run(conf, new SumGroupByMRJobNew(), args);
+            int status = ToolRunner.run(conf, new SumGroupCombinerByMRJobNew(), args);
             System.exit(status);
         } catch (Exception e) {
             e.printStackTrace();

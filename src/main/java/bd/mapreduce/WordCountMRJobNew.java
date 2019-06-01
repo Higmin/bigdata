@@ -47,7 +47,7 @@ public class WordCountMRJobNew extends Configured implements Tool {
         //3.2设置reduce执行流程
         job.setReducerClass(WordCountReducer.class);
         job.setOutputKeyClass(Text.class);//设置reduce输出key的类型
-        job.setMapOutputValueClass(IntWritable.class);//设置reduce输出value的类型
+        job.setOutputValueClass(IntWritable.class);//设置reduce输出value的类型
 
         //3.4设置计算结果输出路径
         Path output = new Path(args[1]);
