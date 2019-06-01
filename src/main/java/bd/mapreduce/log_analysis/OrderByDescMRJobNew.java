@@ -21,7 +21,7 @@ import java.io.IOException;
 /**
  * @Auther : guojianmin
  * @Date : 2019/5/16 08:05
- * @Description : mapreduce  使用工具类  统计单词 数量
+ * @Description : 需求3 自定义键，实现对需求2 结果进行 逆序 排列
  */
 public class OrderByDescMRJobNew extends Configured implements Tool {
     @Override
@@ -123,8 +123,8 @@ public class OrderByDescMRJobNew extends Configured implements Tool {
         //用于本地测试
         if (args.length == 0){
             args = new String[]{
-                "hdfs://ns/mr_project/ad_log/",
-                "hdfs://ns/mr_project/log_analysis/output2"
+                "hdfs://ns/mr_project/log_analysis/output2",
+                "hdfs://ns/mr_project/log_analysis/output3"
             };
         }
         Configuration conf = new Configuration();

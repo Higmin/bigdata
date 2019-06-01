@@ -21,7 +21,7 @@ import java.io.IOException;
 /**
  * @Auther : guojianmin
  * @Date : 2019/5/16 08:05
- * @Description : mapreduce  使用工具类  统计单词 数量
+ * @Description : 需求1 获取指定广告主的明细数据
  */
 public class SelectWhereMRJob extends Configured implements Tool {
     @Override
