@@ -88,7 +88,7 @@ public class SumGroupByMRJobNew extends Configured implements Tool {
                 if (viewTypeInt == 1){//曝光
                     adMetric.setPv(1);
                 }else if (viewTypeInt == 2){
-                    adMetric.setPv(2);
+                    adMetric.setClick(1);
                 }
                 context.write(new Text(date),adMetric);
             }
