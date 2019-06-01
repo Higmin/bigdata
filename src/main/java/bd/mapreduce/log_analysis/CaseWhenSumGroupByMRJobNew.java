@@ -34,7 +34,7 @@ import java.util.HashMap;
  *                   2.然后根据 map 输出key 的类型 来获取到 终端id，
  *                   2.然后根据终端id 获取到要发送的 Reduce Task 编号，并发送到对应的Reduce Task上（即返回值为对应的编号）
  * reduce阶段：1.setup reduce开始的时候调用一次(这里用于初始化终端ID和终端类型的对应关系)
- *            2.reduce 通过终端id 获取到终端类型，然后将终端类型，和曝光量，点击量的统计放在Entity中。
+ *            2.reduce 通过终端id 获取到终端类型，终端类型相同的，调用一次reduce进行统计,然后将终端类型，和曝光量，点击量的统计放在Entity中。
  *            3.cleanup 在reduce 结束的时候调用一次 ，通常用于释放连接等，这里用于输出统计结果
  */
 public class CaseWhenSumGroupByMRJobNew extends Configured implements Tool {
