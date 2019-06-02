@@ -48,15 +48,15 @@ public class TerminalTypePartitioner extends Partitioner<Text,AdMetricWritable> 
     }
 
     /**
-     * 根据 map 输出key 的类型 来获取到 终端id
-     * @param key map 输出key
-     * @param value map 输出value
-     * @param numReduceTasks Reduce Task 编号
-     * @return
+     * 根据 map 输出key 的类型 来获取到 终端id，并重新定义发送到reduce Task 的 算法（默认是对mapKey 去哈希值，然后对reduec Task 个数取余）
+     * @param mapKey map 输出key
+     * @param mapValue map 输出value
+     * @param numReduceTasks Reduce Task 个数
+     * @return reduce Task 编号
      */
     @Override
-    public int getPartition(Text key, AdMetricWritable value, int numReduceTasks) {
-        String terminalId = key.toString();
+    public int getPartition(Text mapKey, AdMetricWritable mapValue, int numReduceTasks) {
+        String terminalId = mapKey.toString();
         return terminalTaskMap.get(terminalId) == null ? 3 : terminalTaskMap.get(terminalId);
     }
 }
